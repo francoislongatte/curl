@@ -34,12 +34,12 @@
 		      <h2>Link</h2>
 		    </div>
 	  <?php foreach($list as $itemList): ?>
-	    	<div class="containerList">
+	    	<div class="containerList <?php echo $itemList->id ?>">
 	    		<img src="<?php echo $itemList->img ?>" />
 	    		<h1><?php echo $itemList->titre?></h1>
 	    		<h2><a class="lienTitre" href="<?= $itemList->url ?>"><?php echo $itemList->url ?></a></h2>
 	    		<p><?php echo $itemList->description ?></p>
-	    		<p class="date"><?= relative_time($itemList->date); ?></p>
+	    		<p class="date clearfix"><?= relative_time($itemList->date); ?></p>
 	    		<?php if($this->session->userdata('logged') && $itemList->bool ):  ?>
 	    		<?= anchor('status/supprimer/' . $itemList->id . '/','Supprimer', 
             			array('title'=> 'Delete the link number ' .  $itemList->id,'class' => 'button delete','id' => $itemList->id )); ?>

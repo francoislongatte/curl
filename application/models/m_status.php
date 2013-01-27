@@ -59,6 +59,10 @@
 		{
 			$array = array("id"=>$id);
 			$this->db->delete('status',$array);
+			
+			$array2 = array("status"=>$id);
+			$this->db->delete('referenceId',$array2);
+			
 		}
 		public function voir($id)
 		{

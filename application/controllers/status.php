@@ -160,6 +160,7 @@ class Status extends CI_Controller {
 			$name = $this->M_Status->recupName($data['email']);
 			$data = array('email'=> $this->input->post('email'), 'logged' => true , 'name' => $name[0]->nom);
 			$this->session->set_userdata($data);
+			
 			$dataReq['list'] = $this->M_Status->lister();
 			$dataLayout['titre'] = "PostYourLink";
 			$dataLayout['vue'] = $this->load->view('home.php',$dataReq,true);
@@ -330,15 +331,25 @@ class Status extends CI_Controller {
 		
 		$this->load->model('M_Status');
 		
-		$data['titre'] = $this->input->post('champtitre');
-		$data['description'] = $this->input->post('champtext');
-		$data['date'] = time();
-		$data['id'] = $this->input->post('id');
-		
-		$this->M_Status->modifier($data);
-		
-		redirect("status");
-		
+		if($this->input->is_ajax_request()){
+			$data['titre'] = $this->input->post('titre');
+			$data['description'] = $this->input->post('des');
+			$data['date'] = time();
+			$data['id'] = $this->input->post('id');
+			
+			$this->M_Status->modifier($data);
+			
+			echo json_encode($data);
+		}else{
+			$data['titre'] = $this->input->post('champtitre');
+			$data['description'] = $this->input->post('champtext');
+			$data['date'] = time();
+			$data['id'] = $this->input->post('id');
+			
+			$this->M_Status->modifier($data);
+			
+			redirect("status");
+		}
 	}
 	
 	public function isValidURL($url)

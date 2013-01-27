@@ -111,13 +111,14 @@
 					$('#formAjoutAjax').slideUp();
 					$('.champ').attr('value' , '');
 					$('#myForm').slideDown();
-					
+					$('.modify').on('click', formModif);
 				}
 			});
 	}
 	
 	function ajouterUnPost(data){
-		var containerList = '<div class="containerList"></div>';
+		console.log(data);
+		var containerList = '<div class="containerList ' + data.idPost+'"></div>';
 		var img = '<img src="'+ data.img + '">';
 		var h1 = '<h1> ' + data.titre + '</h1>';
 		var h2 = '<h2><a class="lienTitre" href="' + data.url + '">' + data.url + '</a></h2>';
@@ -151,20 +152,66 @@
 				}
 			});
 	}
+	
 	function visibleForm(e){
+		e.preventDefault();
 		$('#myForm').slideDown();
 		$('#outilsSupprimer').fadeIn();
 		$('#outilsAjouter').fadeOut();
 	}
+	
 	function hiddenForm(e){
+		e.preventDefault();
 		$('#myForm').slideUp();
 		$('#outilsAjouter').fadeIn();
 		$('#outilsSupprimer').fadeOut();
+	}
+	function formModif(e){
+		e.preventDefault();
+		var urlCourante = e.target.href;
+		var tabId = urlCourante.split('/');
+		var number = tabId.length;
+		var id = tabId[number-1];
+		var h1 = $('.' + id).children('h1').html();
+		var des = $('.' + id).children('p:not(.date)').html();
+		console.log($('.' + id).children('a:not(.delete)').html());
+		if( $('.' + id).children('a:not(.delete)').html() == 'Modifier' ){
+			$('.' + id).children('a.modify').text('Valider').removeClass().addClass('button valider');
+			$('.' + id).children('p:not(.date)').html('<textarea class="des" type="text" rows="20" cols="100%" >'+des+'</textarea>');
+			$('.' + id).children('h1').html('<input class="titre" type="text" size="100%" value="'+ h1 +'">');
+		}else if ( $('.' + id).children('a:not(.delete)').html() == 'Valider'){
+			validForm(id);
+			
+		}
+	}
+	function validForm(id){
+		var id = id;
+		var titre = $('input.titre').val();
+		var description = $('textarea.des').val();
+		$.ajax({
+			type: "POST",
+			url: 'status/modifier',
+			data: { titre:titre , des:description , id:id },
+			dataType: "json",
+			success: function(msg) {
+				$('.' + id).children('a.valider').text('Modifier').removeClass().addClass('button modify');
+				$('.' + id).children('p:not(.date)').html(msg.description);
+				$('.' + id).children('h1').html( msg.titre );
+			},
+			error: function(msg){
+				$('.' + id).children('a.valider').hide();
+				$('.' + id).children('p:not(.date)').html('<p>'+ 'il y a une erreur (Reactualiser pour reafficher l ancien contentu)' +'</p>');
+				$('.' + id).children('h1').html('<h1></1>');
+			}
+		});
+		
 	}
 	$(function() { 
 		$('#outilsSupprimer').fadeIn(1500).on('click', hiddenForm);
 		$('#outilsAjouter').fadeIn(1500).on('click', visibleForm).hide();
 		$('#myForm').on('submit', formAjaxChoisir); 
 		$('.delete').on('click', fDelete);
+		$('.modify').on('click', formModif);
+		
 	});
 }(jQuery));

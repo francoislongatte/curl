@@ -45,6 +45,7 @@ class Status extends CI_Controller {
 				$the_id = $dataList['list'][$i]->id;
 			    $bool = $this->verifArticle($the_id);
 			    $dataList['list'][$i]->bool = $bool;
+			    
 			}
 		}
 		
@@ -126,56 +127,82 @@ class Status extends CI_Controller {
 		$this->load->model('M_Status');
 		$this->load->helper('email');
 		
-		if(!empty($_POST['nom'])){
+		if($this->input->is_ajax_request()){
+			
 			$data['nom'] = $_POST['nom'];
-		}else{
-			$data['nError'] = 'Ce champ est obligatoire';
-		}
-		if($this->M_Status->checkEmail($_POST['email'])>0){
-			$check = false;
-		}else{
-			$check = true;
-		}
-		if(valid_email($_POST['email']) && $check){
-			$data['email'] = $_POST['email'];
-		}else if(!$check){
-			$data['eError'] = 'Cette email est deja enregistrer';
-		}else{
-			$data['eError'] = 'Ce champ est obligatoire';
-		}
-		
-		if(!empty($_POST['mdp'])){
-			$data['mdp'] = $_POST['mdp'];
-		}else{
-			$data['mError'] = 'Ce champ est obligatoire';
-		}
-		
-		if($_POST['mdp'] != $_POST['mdpReco']){
-			$data['remError'] = 'Veuillez correctement recopiez votre mot de passe';
-		}
-		
-		if(valid_email($_POST['email']) && !empty($data['nom']) && !empty($_POST['mdp']) && $check){
+			$data['email'] = $_POST['emailIns'];
+			$data['mdp'] = $_POST['mdpIns'];
 			
-			$this->M_Status->sign($data);
-			$name = $this->M_Status->recupName($data['email']);
-			$data = array('email'=> $this->input->post('email'), 'logged' => true , 'name' => $name[0]->nom);
-			$this->session->set_userdata($data);
+			if($this->M_Status->checkEmail($_POST['emailIns'])>0){
+				$check['check'] = false;
+			}else{
+				$check['check'] = true;
+				$this->M_Status->sign($data);
+				$name = $this->M_Status->recupName($data['email']);
+				$data = array('email'=> $data['email'], 'logged' => true , 'name' => $name[0]->nom);
+				$this->session->set_userdata($data);
+				$check['redirect'] = 'status';
+			}
 			
-			$dataReq['list'] = $this->M_Status->lister();
-			$dataLayout['titre'] = "PostYourLink";
-			$dataLayout['vue'] = $this->load->view('home.php',$dataReq,true);
-			$this->load->view('layout',$dataLayout);
+			
+			
+			
+			echo json_encode($check);
 			
 		}else{
 			
+			if(!empty($_POST['nom'])){
+				$data['nom'] = $_POST['nom'];
+			}else{
+				$data['nError'] = 'Ce champ est obligatoire';
+			}
+			if($this->M_Status->checkEmail($_POST['emailIns'])>0){
+				$check = false;
+			}else{
+				$check = true;
+			}
+			if(valid_email($_POST['emailIns']) && $check){
+				$data['email'] = $_POST['emailIns'];
+			}else if(!$check){
+				$data['eError'] = 'Cette email est deja enregistrer';
+			}else{
+				$data['eError'] = 'Ce champ est obligatoire';
+			}
 			
-			$dataLayout['vue'] = $this->load->view('sign.php',$data,true);
+			if(!empty($_POST['mdpIns'])){
+				$data['mdp'] = $_POST['mdpIns'];
+			}else{
+				$data['mError'] = 'Ce champ est obligatoire';
+			}
 			
-			$dataLayout['titre'] = "PostYourLink";	
+			if($_POST['mdpIns'] != $_POST['mdpReco']){
+				$data['remError'] = 'Veuillez correctement recopiez votre mot de passe';
+			}
 			
-			$this->load->view('layout',$dataLayout);
+			if(valid_email($_POST['emailIns']) && !empty($data['nom']) && !empty($_POST['emailIns']) && $check && $_POST['mdpIns'] === $_POST['mdpReco']){
+				
+				$this->M_Status->sign($data);
+				$name = $this->M_Status->recupName($data['email']);
+				$data = array('email'=> $this->input->post('email'), 'logged' => true , 'name' => $name[0]->nom);
+				$this->session->set_userdata($data);
+				
+				$dataReq['list'] = $this->M_Status->lister();
+				$dataLayout['titre'] = "PostYourLink";
+				$dataLayout['vue'] = $this->load->view('home.php',$dataReq,true);
+				$this->load->view('layout',$dataLayout);
+				
+			}else{
+				
+				
+				$dataLayout['vue'] = $this->load->view('sign.php',$data,true);
+				
+				$dataLayout['titre'] = "PostYourLink";	
+				
+				$this->load->view('layout',$dataLayout);
+			}
+
 		}
-		
+				
 		
 	}
 	public function choisir(){
@@ -203,19 +230,32 @@ class Status extends CI_Controller {
 
 			$dataReq['url'] = $champ;
 			if(isset($description)){
+					
 					if(isset($description[1][0])){
 						$dataReq['description'] = $description[1][0];
+					}else{
+						$dataReq['description'] = 'Ajoutez-y une description';
 					}
 			}
 			if(isset($img)){
 				$chaine = '';
 				foreach($img[1] as $image => $value){
-					$lien =  $this->rel2abs($value,$champ);
-					$chaine = $chaine . $lien . ',';
-
+					$lien =  $this->rel2abs($champ,$value);
+					$size = @getimagesize($lien);
+	
+					$sizeImg = (int)$size[0];
+					if(isset($sizeImg) && $sizeImg > 50 && $size != false){
+						$chaine = $chaine . $lien . ',';
+					}
 				}
 				$test = explode(',',$chaine);
-				$dataReq['lienImg'] = $test;
+				if(!empty($test[0])){
+					$dataReq['lienImg'] = $test;
+				}
+				if(!isset($dataReq['lienImg'])){
+					$dataReq['lienImg'] = array( base_url() .  "web/images/erreur.png" );
+					
+				}
 			}
 
 			if(isset($titles)){
@@ -237,7 +277,7 @@ class Status extends CI_Controller {
 		}
 		else{
 			if($this->input->is_ajax_request()){
-				$dataReq['error'] = $this->curl($champ);
+				$dataReq['error'] = $this->curl(trim($champ));
 				$dataReq['urlpage'] = site_url();
 				
 				echo json_encode($dataReq);
@@ -267,6 +307,12 @@ class Status extends CI_Controller {
 		$data['img'] = $this->input->post('SelectImg');
 		$data['titre'] = $this->input->post('titre');
 		$data['url'] = $this->input->post('url');
+		
+		if(!preg_match('#^(http|https):\/\/#i', $data['url'])){
+			$data['url'] = 'http://' . $data['url'];
+		}else{
+			$data['url'] = $data['url'] ;
+		}
 		$data['description'] = $this->input->post('description');
 		$data['id'] = $this->session->userdata('id');
 		if(empty($data['description'])){
@@ -358,36 +404,22 @@ class Status extends CI_Controller {
 		
 		
 	}
-
-
-	private function rel2abs($rel, $base)
+	
+	private function rel2abs($pageURL, $link)
 	{
-		/* return if already absolute URL */
-		if (parse_url($rel, PHP_URL_SCHEME) != '') return $rel;
+		if ( strstr($link, 'http://') !== false ){
+	    	return $link;
+	    }
+	       	   
+	    if ( $pageURL[strlen($pageURL) - 1] !== '/' ){
+	    	$pageURL .= '/';
+	    }
 
-		/* queries and anchors */
-		if ($rel[0]=='#' || $rel[0]=='?') return $base.$rel;
-
-		/* parse base URL and convert to local variables:
-	       $scheme, $host, $path */
-		extract(parse_url($base));
-
-		/* remove non-directory element from path */
-		$path= '';
-		$path = preg_replace('#/[^/]*$#', '', $path);
-
-		/* destroy path if relative url points to root */
-		if ($rel[0] == '/') $path = '';
-
-		/* dirty absolute URL */
-		$abs = "$host$path/$rel";
-
-		/* replace '//' or '/./' or '/foo/../' with '/' */
-		$re = array('#(/\.?/)#', '#/(?!\.\.)[^/]+/\.\./#');
-		for($n=1; $n>0; $abs=preg_replace($re, '/', $abs, -1, $n)) {}
-
-		/* absolute URL is ready! */
-		return $scheme.'://'.$abs;
+	    /*if ( $link[0] == '/' ){
+	    	$link = substr($link, 1);
+	    }*/
+	        
+	    return $pageURL.$link;
 	}
 	
 	private function curl($champ){

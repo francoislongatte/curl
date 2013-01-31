@@ -1,0 +1,13 @@
+@charset "UTF-8";
+
+
+.icon-edit:before { content: '\270d'; } /* '✍' */
+.icon-ok:before { content: '\2713'; } /* '✓' */
+.icon-cancel:before { content: '\2715'; } /* '✕' */
+.icon-reply:before { content: '\e712'; } /* '' */
+.icon-trash:before { content: '\e729'; } /* '' */
+.icon-login:before { content: '\e740'; } /* '' */
+.icon-logout:before { content: '\e741'; } /* '' */
+.icon-left-open:before { content: '\e75d'; } /* '' */
+.icon-right-open:before { content: '\e75e'; } /* '' */
+.icon-link:before { content: '🔗'; } /* '\1f517' */

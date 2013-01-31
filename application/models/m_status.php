@@ -110,6 +110,17 @@
 			return $query->result();
 			
 		}
+		public function recupName($email){
+			
+			$this->db->select('nom');
+			$this->db->from('compte');
+			$this->db->where("email", $email);
+			
+			$query = $this->db->get();
+			
+			return $query->result();
+			
+		}
 		public function checkEmail($email){
 			
 			$this->db->select('id');
